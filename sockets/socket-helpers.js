@@ -10,10 +10,15 @@ exports.increaseRoomMembers = (room, eventName) => {
 
 exports.projectGroupMembers = group => {
 	let newMembers = group.groupMembers.map(member => {
-		let newMember = (({ _id, firstName, lastName, online, img }) => ({
+		let newMember = (({ _id, userName, birthday,height,city,latitude, longitude, phone, online, img }) => ({
 			_id,
-			firstName,
-			lastName,
+			userName,
+			birthday,
+			height,
+			city,
+			latitude,
+			longitude,
+			phone,
 			online,
 			img
 		}))(member);
@@ -32,10 +37,15 @@ exports.newChatHistory = room => {
 		let fromUser = { ...newMessage.fromUser[0] };
 
 		// destructure our desired data
-		let newFromUser = (({ _id, firstName, lastName, online, img }) => ({
+		let newFromUser = (({ _id, userName, birthday,height,phone,city,latitude,longitude, online, img }) => ({
 			_id,
-			firstName,
-			lastName,
+			userName,
+			birthday,
+			height,
+			phone,
+			city,
+			latitude,
+			longitude,
 			online,
 			img
 		}))(fromUser);

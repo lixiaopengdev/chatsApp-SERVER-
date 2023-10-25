@@ -104,10 +104,10 @@ exports.addMembersToGroup = async (req, res, next) => {
 		const addedUsersSet = await User.getUsersAggregated([ { $match: { _id: { $in: usersObjectIds } } } ]);
 
 		let newAddedUsers = addedUsersSet.map(user => {
-			let newUser = (({ _id, firstName, lastName, online, img }) => ({
+			let newUser = (({ _id, userName, phone, online, img }) => ({
 				_id,
-				firstName,
-				lastName,
+				userName,
+				phone,
 				online,
 				img
 			}))(user);
@@ -224,10 +224,10 @@ exports.friendsForGroups = async (req, res, next) => {
 		const stringifiedMembers = group.members.map(member => member.toString());
 		for (let friend of userFriends) {
 			if (!stringifiedMembers.includes(friend._id.toString())) {
-				let newFriend = (({ _id, firstName, lastName, online, img }) => ({
+				let newFriend = (({ _id, userName, phone, online, img }) => ({
 					_id,
-					firstName,
-					lastName,
+					userName,
+					phone,
 					online,
 					img
 				}))(friend);

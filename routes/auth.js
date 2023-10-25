@@ -10,13 +10,18 @@ const router = express.Router();
 router.post(
 	'/signup',
 	[
-		body('firstName', 'FirstName must not be empty and in characters').trim().notEmpty().isAlpha(),
-		body('lastName', 'LastName must not be empty and in characters').trim().notEmpty().isAlpha(),
-		body('email', 'Email is not a valid email').trim().isEmail(),
-		body('country', 'Country must not be empty, only in characters').trim().isAlpha(),
-		body('age', 'Age must be in numbers').trim().isNumeric(),
+		body('userName', 'userName must not be empty and in characters').trim().notEmpty(),
+		body('birthday', 'Brithday must not be empty and in characters').trim().notEmpty(),
+		// body('email', 'Email is not a valid email').trim().isEmail(),
+		body('phone', 'Phone must not be empty and in characters').trim().notEmpty(),
+		body('city', 'Country must not be empty, only in characters').trim().notEmpty(),
+		body('age', 'Age must be in numbers').trim().notEmpty(),
 		body('gender', 'Gender must not be empty').trim().notEmpty(),
-		body('password', 'Password must be 6 characters at least').trim().isLength({ min: 6 })
+		body('password', 'Password must be 6 characters at least').trim().notEmpty(),
+		body('height', 'height must not be empty').trim().notEmpty(),
+		body('wechat'),
+		body('introduction','Introduct must not be empty').trim().notEmpty()
+
 	],
 	checkValidation,
 	authControllers.postSignUp
@@ -26,7 +31,7 @@ router.post(
 router.post(
 	'/signin',
 	[
-		body('email', 'Email must be a valid email').isEmail(),
+		body('phone', 'Phone must be a valid phone').notEmpty(),
 		body('password', 'Please write down your password').notEmpty()
 	],
 	checkValidation,

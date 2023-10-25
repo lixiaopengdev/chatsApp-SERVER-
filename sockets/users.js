@@ -37,6 +37,7 @@ exports.onChats = async userToken => {
 		// get only the chats that its chatHistory has some messages
 
 		if (userChatRooms.length < 1) {
+			console.log('=====================cha')
 			return getIo().emit('userChats', { userId: userId, userChats: [] });
 		}
 
@@ -123,6 +124,7 @@ exports.onChats = async userToken => {
 		});
 
 		const sortedUserChats = mappedUserChats.slice().sort((a, b) => b.lastMessageDate - a.lastMessageDate);
+		console.log('==================cha')
 		getIo().emit('userChats', { userId: userId, userChats: sortedUserChats });
 	} catch (error) {
 		getIo().emit('userChats', { error: error.message });
@@ -294,7 +296,7 @@ exports.joinChatRoom = async (socket, chatRoomId, userToken) => {
 };
 
 exports.sendPrivateMessage = async (socket, messageData, userToken) => {
-	const { firstName, lastName, message, to } = messageData;
+	const { userName, phone,height,city,latitude,longitude, message, to } = messageData;
 	try {
 		const from = socketIsAuth(userToken);
 
@@ -309,8 +311,12 @@ exports.sendPrivateMessage = async (socket, messageData, userToken) => {
 			seen: newMessage.seen,
 			fromUser: {
 				_id: from,
-				firstName: firstName,
-				lastName: lastName
+				userName: userName,
+				phone: phone,
+				height:height,
+				city:city,
+				latitude:latitude,
+				longitude:longitude,
 			},
 			message: message
 		};
@@ -430,7 +436,7 @@ exports.joinGroupRoom = async (socket, groupRoomId, userToken) => {
 };
 
 exports.sendGroupMessage = async (socket, messageData, userToken) => {
-	const { firstName, lastName, message } = messageData;
+	const { userName, birthday,height,city,latitude,longitude,phone, message } = messageData;
 	const clientGroupRoom = Object.keys(socket.rooms)[1];
 
 	let userIdCopy;
@@ -449,8 +455,13 @@ exports.sendGroupMessage = async (socket, messageData, userToken) => {
 
 			fromUser: {
 				_id: from,
-				firstName: firstName,
-				lastName: lastName
+				userName: userName,
+				phone: phone,
+				height:height,
+				birthday:birthday,
+				city:city,
+				latitude,
+				longitude,
 			},
 
 			message: message

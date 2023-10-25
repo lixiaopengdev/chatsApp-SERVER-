@@ -5,16 +5,14 @@ const isAuth = (req, res, next) => {
 	console.log('dev');
 	try {
 		const authHeader = req.get('Authorization');
-		console.log('isAuth -> authHeader', authHeader);
 		if (!authHeader) sendError('User is not authenticated', 401);
 
 		// expext the token in the Authorization header with this name Barear-tokenHash
 		const token = authHeader.split(' ')[1];
 		if (!token) sendError('No Token was given, user is not authenticated', 401);
 
-		const decodedToken = jwt.decode(token, `${process.env.TOKEN_SECRET}`);
+		const decodedToken = jwt.verify(token, `${process.env.TOKEN_SECRET}`);
 		if (!decodedToken) sendError('Token is fake, user is not authenticated', 401);
-
 		// make the userId live to the next middleware
 		req.userId = decodedToken.userId;
 		console.log('isAuth -> decodedToken.userId', decodedToken.userId);

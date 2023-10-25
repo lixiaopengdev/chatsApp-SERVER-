@@ -16,9 +16,9 @@ const cloudinaryRemoval = require('../helpers/cloudinary').cloudinaryRemoval;
 exports.patchEditUserProfile = async (req, res, next) => {
 	const userId = req.userId;
 
-	const { firstName, lastName, age, gender, bio, country } = req.body;
+	const { userName, birthday, age, gender, bio, city,introduction,wechat,height,latitude,longitude } = req.body;
 
-	const newUser = { firstName: firstName, lastName: lastName, age: age, gender: gender, country: country, bio: bio };
+	const newUser = { userName: userName, birthday: birthday, age: age, gender: gender, city: city, bio: bio, introduction:introduction,height:height,latitude:latitude,longitude:longitude,wechat:wechat };
 
 	await User.updateUserWithCondition({ _id: new ObjectId(userId) }, { $set: newUser });
 
@@ -33,7 +33,6 @@ exports.patchEditUserProfile = async (req, res, next) => {
 exports.getUserAfterLogin = async (req, res, next) => {
 	const userId = req.userId;
 	console.log('exports.getUserAfterLogin -> userId', userId);
-	console.log('working');
 
 	try {
 		let user;
@@ -42,15 +41,21 @@ exports.getUserAfterLogin = async (req, res, next) => {
 
 			{
 				$project: {
-					firstName: 1,
-					lastName: 1,
+					userName: 1,
+					birthday: 1,
 					age: 1,
+					phone: 1,
+					city: 1,
+					height: 1,
+					wechat: 1,
+					latitude: 1,
+					longitude: 1, 
 					friendRequests: 1,
 					notifications: 1,
 					gender: 1,
 					online: 1,
 					bio: 1,
-					country: 1,
+					introduction: 1,
 					img: 1
 				}
 			}
@@ -64,15 +69,21 @@ exports.getUserAfterLogin = async (req, res, next) => {
 
 				{
 					$project: {
-						firstName: 1,
-						lastName: 1,
+						userName: 1,
+						birthday: 1,
 						age: 1,
+						height: 1,
+						city: 1,
+						phone: 1,
+						latitude: 1,
+						longitude: 1,
+						wechat: 1,
 						friendRequests: 1,
 						notifications: 1,
 						gender: 1,
 						online: 1,
 						bio: 1,
-						country: 1,
+						introduction: 1,
 						img: 1
 					}
 				},
@@ -168,15 +179,20 @@ exports.getUserAfterLogin = async (req, res, next) => {
 
 				{
 					$project: {
-						firstName: 1,
-						lastName: 1,
+						userName: 1,
+						birthday: 1,
 						age: 1,
+						phone: 1,
+						height:1,
+						wechat:1,
+						latitude:1,
+						longitude:1,
 						friendRequests: 1,
 						notifications: 1,
 						gender: 1,
 						online: 1,
 						bio: 1,
-						country: 1,
+						introduction: 1,
 						img: 1
 					}
 				},
@@ -229,15 +245,21 @@ exports.getUserAfterLogin = async (req, res, next) => {
 
 				{
 					$project: {
-						firstName: 1,
-						lastName: 1,
+						userName: 1,
+						birthday: 1,
 						age: 1,
+						phone: 1,
+						height: 1,
+						city: 1,
+						latitude:1,
+						longitude:1,
+						wechat:1,
 						friendRequests: 1,
 						notifications: 1,
 						gender: 1,
 						online: 1,
 						bio: 1,
-						country: 1,
+						introduction: 1,
 						img: 1
 					}
 				},
@@ -290,12 +312,71 @@ exports.getUserAfterLogin = async (req, res, next) => {
 		user.friendRequests.sort((a, b) => b.date - a.date);
 		user.notifications.sort((a, b) => b.data - a.data);
 
-		res.status(200).json({ message: 'User fetched successfully', user: user });
+		res.status(200).json({
+			data:{ message: 'User fetched successfully',
+			 user: user 
+			},
+			status:200,
+		});
 	} catch (error) {
 		if (!error.statusCode) error.statusCode = 500;
 		next(error);
 	}
 };
+
+exports.onlinePeople = async(req, res ,next) => {
+	try {
+
+	} catch (error) {
+		if(!error.statusCode)
+		error.statusCode  = 500
+		next(error)
+	}
+}
+
+exports.findAllPeople = async (req, res, next) => {
+  const { userId } = req;
+  let page = parseInt(req.query.page) || 1;
+  let perPage = 50;
+  let startIndex = (page - 1) * perPage;
+
+  try {
+    const allUsers = await User.getUsersAggregated([
+      {
+        $match: {
+          _id: { $ne: new ObjectId(userId) }
+        }
+      },
+      { $project: { password: 0 } },
+      { $skip: startIndex },
+      { $limit: perPage }
+    ]);
+
+    if (allUsers.length === 0) {
+      return res.status(413).json({
+        status: 413,
+        err_msg: 'No data found'
+      });
+    }
+
+    const totalUsers = await User.getUserCount({ _id: { $ne: new ObjectId(userId) } });
+    const allPage = Math.ceil(totalUsers / perPage);
+
+    res.status(200).json({
+      status: 200,
+      data: {
+        users: allUsers,
+        startIndex: startIndex,
+        allPage: allPage
+      }
+    })
+  } catch (error) {
+    if (!error.statusCode) error.statusCode = 500;
+    next(error);
+  }
+};
+
+
 
 exports.findPeople = async (req, res, next) => {
 	let { userId } = req;
@@ -320,7 +401,7 @@ exports.findPeople = async (req, res, next) => {
 					$and: [ { _id: { $nin: userFriendsArr } }, { _id: { $not: { $eq: new ObjectId(userId) } } } ]
 				}
 			},
-			{ $project: { password: 0, email: 0, notifications: 0, chats: 0, groups: 0 } }
+			{ $project: { password: 0, phone:0 , notifications: 0, chats: 0, groups: 0 } }
 		]);
 
 		const friendRequestsUsersArr = user.friendRequestsUsers; //Array of userIds(people who sent him a friend request)
@@ -334,11 +415,15 @@ exports.findPeople = async (req, res, next) => {
 				// return only some fields
 				return {
 					_id: person._id,
-					firstName: person.firstName,
-					lastName: person.lastName,
+					userName: person.userName,
+					birthday: person.birthday,
 					age: person.age,
-					country: person.country,
+					city: person.city,
 					gender: person.gender,
+					height: person.height,
+					latitude: person.latitude,
+					longitude: person.longitude,
+					wechat: person.wechat,
 					sent: person.sent,
 					img: person.img,
 					mutualFriends
@@ -364,7 +449,13 @@ exports.visitProfile = async (req, res, next) => {
 			{
 				$project: {
 					password: 0,
-					email: 0,
+					phone: 0,
+					height: 0,
+					city:0,
+					latitude:0,
+					longitude:0,
+					gender:0,
+					wechat:0,
 					notifications: 0,
 					friendRequests: 0,
 					groups: 0,
@@ -419,8 +510,13 @@ exports.visitProfile = async (req, res, next) => {
 					from: userWhoWatched._id,
 					fromUser: {
 						_id: userWhoWatched._id,
-						firstName: userWhoWatched.firstName,
-						lastName: userWhoWatched.lastName,
+						userName: userWhoWatched.userName,
+						phone: userWhoWatched.phone,
+						height:userWhoWatched.height,
+						city:whoWatchedId.city,
+						latitude:whoWatchedId.latitude,
+						longitude:whoWatchedId.longitude,
+						gender:whoWatchedId.gender,
 						img: userWhoWatched.img
 					},
 					data: notification.data, //date (typo)
@@ -456,21 +552,26 @@ exports.getFriends = async (req, res, next) => {
 			{ $match: { _id: new ObjectId(userId) } },
 			{ $project: { password: 0 } },
 			{ $lookup: { from: 'users', localField: 'friends', foreignField: '_id', as: 'userFriends' } },
-			{
-				$project: {
-					friends: 0,
-					profileViewers: 0,
-					'userFriends.password': 0,
-					'userFriends.email': 0,
-					'userFriends.notifications': 0,
-					'userFriends.friendRequests': 0,
-					'userFriends.friendRequestsUsers': 0,
-					'userFriends.groups': 0,
-					'userFriends.profileViewers': 0
-				}
-			}
+			// {
+			// 	$project: {
+			// 		friends: 0,
+			// 		profileViewers: 0,
+			// 		'userFriends.password': 0,
+			// 		// 'userFriends.phone': 0,
+			// 		// 'userFriends.city':0,
+			// 		// 'userFriends.height':0,
+			// 		// 'userFriends.latitude':0,
+			// 		// 'userFriends.longitude':0,
+			// 		// 'userFriends.gender':0,
+			// 		// 'userFriends.notifications': 0,
+			// 		// 'userFriends.friendRequests': 0,
+			// 		// 'userFriends.friendRequestsUsers': 0,
+			// 		// 'userFriends.groups': 0,
+			// 		// 'userFriends.profileViewers': 0
+			// 	}
+			// }
 		]);
-
+		
 		let userFriends = user.userFriends; // [{}, {}]
 
 		// each user friend has an array of his friends ids, loop through the userFriends, and execute the findMutual to each on each one
@@ -485,21 +586,41 @@ exports.getFriends = async (req, res, next) => {
 				}
 				const matualFriends = findMutualFriends(user, userFriend);
 
-				let newUserFriend = (({ _id, firstName, lastName, online, img }) => ({
+				let newUserFriend = (({ _id, userName,phone,wechat,bio,introduction,displayImgs, age,birthday,city,height,latitude,longitude, online, img,gender }) => ({
 					_id,
-					firstName,
-					lastName,
+					userName,
+					age,
+					birthday,
+					city,
+					height,
+					latitude,
+					longitude,
 					online,
-					img
+					gender,
+					img,
+					bio,
+					introduction,
+					wechat,
+					phone,
+					displayImgs,
 				}))(userFriend);
-
 				return { ...newUserFriend, matualFriends, sharedChatRoom: sharedChatRoom };
 			});
 
-			return res.status(200).json({ friends: userFriends });
+			return res.status(200).json({
+				status:200,
+				data: {
+				 friends: userFriends 
+				}
+				});
 		}
 
-		res.status(200).json({ friends: userFriends });
+		res.status(200).json({
+			status:200,
+			data:{
+			 friends: userFriends
+			} 
+			});
 	} catch (error) {
 		if (!error.statusCode) error.statusCode = 500;
 		next(error);
@@ -627,8 +748,14 @@ exports.patchSendFriendRequest = async (req, res, next) => {
 						from: user._id.toString(),
 						fromUser: {
 							_id: user._id.toString(),
-							firstName: user.firstName,
-							lastName: user.lastName,
+							userName: user.userName,
+							birthday: user.birthday,
+							height:user.height,
+							city:user.city,
+							latitude:user.latitude,
+							longitude:user.longitude,
+							age:user.age,
+							gender:user.gender,
 							img: user.img
 						},
 						data: notificationForUser.data, //date
@@ -639,8 +766,15 @@ exports.patchSendFriendRequest = async (req, res, next) => {
 						_id: notificationForAddTo._id,
 						fromUser: {
 							_id: userToAdd._id.toString(),
-							firstName: userToAdd.firstName,
-							lastName: userToAdd.lastName,
+							userName: userToAdd.userName,
+							birthday: userToAdd.birthday,
+							height:userToAdd.height,
+							city:userToAdd.city,
+							age:userToAdd.age,
+							latitude:userToAdd.latitude,
+							longitude:userToAdd.longitude,
+							phone:userToAdd.phone,
+							gender:user.gender,
 							img: userToAdd.img
 						},
 						data: notificationForAddTo.data, //date,
@@ -681,11 +815,16 @@ exports.patchSendFriendRequest = async (req, res, next) => {
 				type: 'friendRequest',
 				fromUser: {
 					_id: user._id.toString(),
-					firstName: user.firstName,
-					lastName: user.lastName,
+					userName: user.userName,
+					birthday: user.birthday,
+					height:user.height,
+					latitude:user.latitude,
+					longitude:user.longitude,
+					phone:user.phone,
 					img: user.img,
 					gender: user.gender,
-					country: user.country
+					city: user.city,
+					gender:user.gender,
 				},
 				date: friendRequest.date // date
 			},
@@ -738,8 +877,14 @@ exports.deleteRejectFriendRequest = async (req, res, next) => {
 				from: user._id.toString(),
 				fromUser: {
 					_id: user._id.toString(),
-					firstName: user.firstName,
-					lastName: user.lastName,
+					userName: user.userName,
+					birthday: user.birthday,
+					height:user.height,
+					city:user.city,
+					phone:user.phone,
+					latitude:user.latitude,
+					longitude:user.longitude,
+					gender:user.gender,
 					img: user.img
 				},
 				data: notification.data, //date (typo),
@@ -805,8 +950,14 @@ exports.patchAcceptFriendRequest = async (req, res, next) => {
 				from: user._id.toString(),
 				fromUser: {
 					_id: user._id.toString(),
-					firstName: user.firstName,
-					lastName: user.lastName,
+					userName: user.userName,
+					birthday: user.birthday,
+					height:user.height,
+					city:user.city,
+					latitude:user.latitude,
+					longitude:user.longitude,
+					gender:user.gender,
+					phone:user.phone,
 					img: user.img
 				},
 				data: notification.data, // date (typo)
@@ -852,18 +1003,19 @@ exports.deleteRemoveNotification = async (req, res, next) => {
 };
 
 exports.uploadPP = async (req, res, next) => {
+	console.log('uploadPP')
+	console.log(req.file)
+	console.log(req.files)
+
 	const userId = req.userId;
 	try {
-		const imgFile = req.file;
+		const imgFile = req.files.image;
 
 		if (!imgFile) sendError('File was not passed!', 422);
 
-		console.log('exports.uploadPP -> imgFile', imgFile);
-		const imagePath = imgFile.path.replace('\\', '/');
+		const imagePath = imgFile.tempFilePath; //imgFile.path.replace('\\', '/');
 
-		console.log('exports.uploadPP -> imagePath', imagePath);
-
-		const { secure_url, public_id } = await cloudinaryUploader(imagePath, 'chatsApp');
+		const { secure_url, public_id } = await cloudinaryUploader(imagePath, `chatsApp/${userId}`);
 
 		const publikIdToBeSent = public_id.split('/')[1];
 
@@ -875,8 +1027,15 @@ exports.uploadPP = async (req, res, next) => {
 		fs.unlink(imagePath, error => {
 			if (error) throw error;
 		});
-
-		res.status(200).json({ message: 'Image uploaded successfully.', img: imgObj });
+		console.log('upload success')
+		console.log(imgObj)
+		res.status(200).json({
+			status:200,
+			data:imgObj.url,
+			message: 
+			 'Image uploaded successfully.',
+			img: imgObj 
+		});
 	} catch (error) {
 		if (!error.statusCode) error.statusCode = 500;
 		next(error);
@@ -896,11 +1055,11 @@ exports.editPP = async (req, res, next) => {
 	// new img
 
 	try {
-		const imageFile = req.file;
+		const imageFile = req.files.image;
 		console.log('exports.editPP -> imgFile', imageFile);
 		if (!imageFile) sendError('The User didn`t pass the new file', 422);
 
-		const imagePath = imageFile.path.replace('\\', '/');
+		const imagePath = imageFile.tempFilePath //imageFile.path.replace('\\', '/');
 		console.log('exports.editPP -> imagePath', imagePath);
 
 		const user = await User.getUser(userId);
@@ -908,7 +1067,7 @@ exports.editPP = async (req, res, next) => {
 
 		if (!user) sendError('User with given id not found', 404);
 
-		const { secure_url, public_id } = await cloudinaryUploader(imagePath, 'chatsApp');
+		const { secure_url, public_id } = await cloudinaryUploader(imagePath, `chatsApp/${userId}`);
 		console.log('exports.editPP -> public_id', public_id);
 
 		const publicIdToBeSent = public_id.split('/')[1];
@@ -918,7 +1077,7 @@ exports.editPP = async (req, res, next) => {
 		await User.updateUserWithCondition({ _id: new ObjectId(userId) }, { $set: { img: imgObj } });
 
 		console.log('reached here !!!!');
-		const result = await cloudinaryRemoval(publicId);
+		const result = await cloudinaryRemoval(publicId,userId);
 
 		console.log('exports.editPP -> result', result);
 
@@ -926,7 +1085,12 @@ exports.editPP = async (req, res, next) => {
 			if (error) throw error;
 		});
 
-		res.status(200).json({ message: 'profile picture updated successfully', img: imgObj });
+		res.status(200).json({
+			status:200,
+			data: imgObj.url,
+			message: 'profile picture updated successfully',
+			img: imgObj
+		 });
 	} catch (error) {
 		if (!error.statusCode) error.statusCode = 500;
 		next(error);

@@ -14,12 +14,23 @@ exports.findMutualFriends = (userX, userY) => {
 
 		for (let xFriend of userX.userFriends) {
 			if (yFriendsObj.hasOwnProperty(`${xFriend._id}`)) {
-				let newMutualFriend = (({ _id, firstName, lastName, online, img }) => ({
+				let newMutualFriend = (({ _id, userName,wechat,bio,introduction, birthday,phone,city,height,latitude,longitude, online, img,age ,gender}) => ({
 					_id,
-					firstName,
-					lastName,
+					userName,
+					birthday,
+					phone,
+					city,
+					height,
+					age,
+					latitude,
+					longitude,
 					online,
-					img
+					img,
+					displayImgs,
+					gender,
+					wechat,
+					bio,
+					introduction,
 				}))(xFriend);
 
 				mutualFriends.push(newMutualFriend);

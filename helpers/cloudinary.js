@@ -18,9 +18,9 @@ const cloudinaryUploader = (file, folder) => {
 	});
 };
 
-const cloudinaryRemoval = publikId => {
+const cloudinaryRemoval = (publikId, userId) => {
 	return new Promise((resolve, reject) => {
-		cloudinary.uploader.destroy(`chatsApp/${publikId}`, {}, (err, result) => {
+		cloudinary.uploader.destroy(`chatsApp/${userId}/${publikId}`, {}, (err, result) => {
 			console.log('err', err);
 			if (err) reject('File did not removed from the cloud');
 			resolve('file have been removed');

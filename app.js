@@ -4,12 +4,18 @@ const initIo = require('./helpers/socket').initIo;
 const app = express();
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
-
+const fileUpload = require('express-fileupload');
+const cors = require("cors");
+const xss = require('xss-clean');
+const clientURL = require('./utils/URI');
 const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const groupRoutes = require('./routes/groups');
+const postRoutes = require('./routes/post');
 const usersSockets = require('./sockets/users');
 const User = require('./models/user');
+const { leaveGroup } = require('./controllers/groups');
+
 // allow CORS
 app.use((req, res, next) => {
 	res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,10 +26,16 @@ app.use((req, res, next) => {
 
 app.use(helmet());
 app.use(bodyParser.json());
+app.use(xss());
+app.use(helmet());
+app.use(express.json());
+app.use(fileUpload({ useTempFiles: true }));
+app.use(cors());
 
-app.use('/auth', authRoutes);
-app.use('/users', usersRoutes);
-app.use('/groups', groupRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', usersRoutes);
+app.use('/api/v1/groups', groupRoutes);
+app.use('/api/v1/posts', postRoutes);
 
 // error handler middleware
 app.use((error, req, res, next) => {
@@ -74,17 +86,21 @@ initDb((error, client) => {
 		// listening to our only namespace => '/'
 		// 1- emit,   2- socket.on   3- io.in(room).emit(),
 		io.on('connection', socket => {
+			console.log('a new user connected')
 			socket.on('changeActivityStatusFromClient', data => {
+				console.log('changeActivityStatusFromClient')
 				usersSockets.changeActivityStatus(data);
 			});
 
 			socket.on('leaveRoomOrGroup', data => {
+				console.log('leaveRoomOrGroup')
 				const { roomId } = data;
 				socket.leave(roomId);
 			});
 
 			// when the user request his chats
 			socket.on('onChats', data => {
+				console.log('onChats')
 				usersSockets.onChats(data.userToken);
 			});
 
@@ -94,10 +110,12 @@ initDb((error, client) => {
 			});
 
 			socket.on('privateMessage', data => {
+				console.log('privateMessage')
 				usersSockets.sendPrivateMessage(socket, data.messageData, data.userToken);
 			});
 
 			socket.on('messageIsSeen', data => {
+				console.log('messageSeen')
 				usersSockets.messageSeen(socket, data);
 			});
 
@@ -115,10 +133,12 @@ initDb((error, client) => {
 			});
 
 			socket.on('joinGroupRoom', data => {
+				console.log('joinGroupRoom')
 				usersSockets.joinGroupRoom(socket, data.groupId, data.userToken);
 			});
 
 			socket.on('sendGroupMessage', data => {
+				console.log('sendGroupMessage')
 				usersSockets.sendGroupMessage(socket, data.messageData, data.userToken);
 			});
 		});
